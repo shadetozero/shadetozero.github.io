@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://shadetozero.github.io/sitemap.xml
