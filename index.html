@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Debt-Free Date Calculator (Snowball vs Avalanche) | Shade to Zero</title>
+<meta name="description" content="Free debt payoff calculator. Enter your debts and see your debt-free date, total interest and payoff order with the snowball or avalanche method. No sign-up.">
+<meta property="og:title" content="When will you be debt free? Free calculator">
+<meta property="og:description" content="Enter your debts. See your debt-free date with snowball or avalanche. No sign-up.">
+<style>
+:root{--bg:#F6F8F7;--card:#fff;--ink:#2E3A35;--soft:#6F7F78;--line:#D6DED9;--acc:#5E8A75;--accbg:#EEF3F0;--warm:#C98B5F;--err:#B4543A}
+@media (prefers-color-scheme:dark){:root{--bg:#141917;--card:#1D2421;--ink:#E7EEEA;--soft:#9AABA3;--line:#33403A;--acc:#86B39D;--accbg:#22302A;--warm:#E0A77E;--err:#E58A70}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.15;margin:0 0 8px}
+.lead{color:var(--soft);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+.row{display:grid;grid-template-columns:2fr 1.3fr 1fr 1.2fr 32px;gap:8px;margin-bottom:8px;align-items:center}
+.row.head{font-size:12px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.04em}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;min-width:0}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:1px}
+.x{border:0;background:none;color:var(--soft);font-size:20px;cursor:pointer;padding:0}
+.btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.btn.ghost{background:var(--accbg);color:var(--ink)}
+.btn.main{background:var(--acc);color:#fff}
+.btn.warm{background:var(--warm);color:#fff}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+label.l{font-size:13px;font-weight:700;color:var(--soft);display:block;margin-bottom:4px}
+.big{font-size:clamp(30px,7vw,44px);font-weight:800;margin:4px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.stat{background:var(--accbg);border-radius:10px;padding:12px}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:12px;color:var(--soft)}
+ol{padding-left:20px;margin:8px 0}
+.cmp{font-size:14px;color:var(--soft)}
+.err{color:var(--err);font-weight:600}
+.cta h2{margin:0 0 6px;font-size:22px}
+.cta p{margin:0 0 14px;color:var(--soft)}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.fine{font-size:12px;color:var(--soft);margin-top:24px}
+@media (max-width:560px){.row{grid-template-columns:1fr 1fr;}.row.head{display:none}.row input[data-k=name]{grid-column:1/-1}.opts,.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>When will you be debt free?</h1>
+  <p class="lead">Enter your debts. See your debt-free date, total interest and payoff order. Free, no sign-up, nothing is saved or sent anywhere.</p>
+
+  <section class="card">
+    <div class="row head"><div>Debt</div><div>Balance $</div><div>Rate %</div><div>Min. pay $</div><div></div></div>
+    <div id="debts"></div>
+    <button class="btn ghost" id="add" type="button">+ Add a debt</button>
+    <div class="opts">
+      <div><label class="l" for="extra">Extra I can pay each month $</label><input id="extra" type="number" min="0" step="1" value="100" inputmode="decimal"></div>
+      <div><label class="l" for="method">Method</label>
+        <select id="method"><option value="avalanche">Avalanche (highest rate first)</option><option value="snowball">Snowball (smallest balance first)</option></select></div>
+    </div>
+  </section>
+
+  <section class="card" id="result" aria-live="polite"></section>
+
+  <section class="card cta">
+    <h2>Make it real on paper</h2>
+    <p>Print a free tracker and shade one block every time you pay down your debt. Or get the full 55-page 2027 Debt Payoff Planner.</p>
+    <div class="ctas">
+      <a class="btn main" href="https://shadetozero.gumroad.com/l/free-debt-tracker">Get the free tracker</a>
+      <a class="btn warm" href="https://shadetozero.gumroad.com/l/debt-payoff-planner">Full planner, $5.99</a>
+    </div>
+  </section>
+
+  <p class="fine">Estimates only. Assumes fixed rates, no new charges, and interest charged monthly. Real results vary. This is a planning tool, not financial advice.</p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const sample=[["Credit card A",4200,24.99,120],["Credit card B",1800,19.99,55],["Car loan",9500,6.9,260]];
+function addRow(d=["",0,0,0]){
+  const r=document.createElement('div');r.className='row';
+  r.innerHTML=`<input data-k="name" placeholder="Name" aria-label="Debt name">
+  <input data-k="bal" type="number" min="0" step="1" placeholder="Balance" aria-label="Balance" inputmode="decimal">
+  <input data-k="apr" type="number" min="0" step="0.01" placeholder="Rate %" aria-label="Interest rate" inputmode="decimal">
+  <input data-k="min" type="number" min="0" step="1" placeholder="Min" aria-label="Minimum payment" inputmode="decimal">
+  <button class="x" type="button" aria-label="Remove debt">×</button>`;
+  const [n,b,a,m]=d; const q=k=>r.querySelector(`[data-k=${k}]`);
+  q('name').value=n; if(b)q('bal').value=b; if(a)q('apr').value=a; if(m)q('min').value=m;
+  r.querySelector('.x').onclick=()=>{r.remove();calc()};
+  r.addEventListener('input',calc); $('#debts').appendChild(r);
+}
+function read(){return [...document.querySelectorAll('#debts .row')].map((r,i)=>{const v=k=>parseFloat(r.querySelector(`[data-k=${k}]`).value)||0;
+  return {name:r.querySelector('[data-k=name]').value||`Debt ${i+1}`,bal:v('bal'),apr:v('apr'),min:v('min')}}).filter(d=>d.bal>0)}
+function sim(debts,extra,method){
+  const ds=debts.map(d=>({...d})); let month=0,interest=0; const order=[];
+  const budget=ds.reduce((s,d)=>s+d.min,0)+extra;
+  const sorter=method==='snowball'?(a,b)=>a.bal-b.bal:(a,b)=>b.apr-a.apr||a.bal-b.bal;
+  while(ds.some(d=>d.bal>0.005)){
+    month++; if(month>600) return {fail:true};
+    let left=budget;
+    for(const d of ds){ if(d.bal<=0)continue; const i=d.bal*d.apr/1200; d.bal+=i; interest+=i; }
+    for(const d of ds){ if(d.bal<=0)continue; const p=Math.min(d.min,d.bal); d.bal-=p; left-=p; }
+    for(const d of ds.filter(d=>d.bal>0).sort(sorter)){ if(left<=0)break; const p=Math.min(left,d.bal); d.bal-=p; left-=p; }
+    for(const d of ds){ if(d.bal<=0.005&&!d.done){d.done=true;d.bal=0;order.push({name:d.name,month});} }
+  }
+  return {month,interest,order};
+}
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+function dateIn(m){const d=new Date();d.setMonth(d.getMonth()+m);return d.toLocaleDateString(undefined,{month:'long',year:'numeric'})}
+function calc(){
+  const debts=read(),extra=Math.max(0,parseFloat($('#extra').value)||0),method=$('#method').value,out=$('#result');
+  if(!debts.length){out.innerHTML='<p class="cmp">Add at least one debt with a balance.</p>';return}
+  const total=debts.reduce((s,d)=>s+d.bal,0);
+  const r=sim(debts,extra,method);
+  if(r.fail){out.innerHTML='<p class="err">At these payments the balance does not go down. Check minimum payments, or add more each month.</p>';return}
+  const other=sim(debts,extra,method==='snowball'?'avalanche':'snowball');
+  const base=sim(debts,0,method);
+  const diff=other.fail?0:other.interest-r.interest;
+  out.innerHTML=`<label class="l">Your estimated debt-free date</label>
+  <div class="big">${dateIn(r.month)}</div>
+  <div class="stats"><div class="stat"><b>${r.month}</b><span>months to go</span></div>
+  <div class="stat"><b>${fmt(total)}</b><span>total debt today</span></div>
+  <div class="stat"><b>${fmt(r.interest)}</b><span>estimated interest</span></div></div>
+  <label class="l">Payoff order</label>
+  <ol>${r.order.map(o=>`<li>${o.name.replace(/[<>&]/g,'')} paid off in month ${o.month}</li>`).join('')}</ol>
+  <p class="cmp">${diff>1?`This method saves about ${fmt(diff)} in interest vs the other one.`:diff<-1?`The other method would save about ${fmt(-diff)} in interest, but this one may give you quicker wins.`:'Both methods cost about the same here.'}
+  ${!base.fail&&extra>0&&base.month>r.month?` Your extra ${fmt(extra)}/month gets you there ${base.month-r.month} months sooner.`:''}</p>`;
+}
+sample.forEach(addRow);
+$('#add').onclick=()=>{addRow();};
+$('#extra').addEventListener('input',calc);$('#method').addEventListener('change',calc);
+calc();
+</script>
+</body>
+</html>
